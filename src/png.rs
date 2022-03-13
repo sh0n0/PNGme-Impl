@@ -2,6 +2,7 @@ use std::convert::TryFrom;
 use std::path::Path;
 use std::str::FromStr;
 use std::{fmt, fs};
+use thiserror::Error;
 
 use crate::chunk::Chunk;
 use crate::chunk_type::ChunkType;
@@ -27,7 +28,7 @@ impl Png {
 
     /// Creates a `Png` from a file path
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let image = fs::read(path).map_err(|_| "could not read image")?;
+        let image = fs::read(path)?;
         let png = Png::try_from(image.as_ref())?;
         Ok(png)
     }
@@ -45,7 +46,7 @@ impl Png {
             .chunks
             .iter()
             .position(|c| *c.chunk_type() == target_chunk_type)
-            .ok_or("chunk not found")?;
+            .ok_or(PngError::ChunkNotFound)?;
 
         Ok(self.chunks.remove(index))
     }
@@ -83,14 +84,14 @@ impl TryFrom<&[u8]> for Png {
 
     fn try_from(bytes: &[u8]) -> Result<Png> {
         if bytes[0..Png::STANDARD_HEADER.len()] != Png::STANDARD_HEADER {
-            return Err("invalid png header");
+            Err(PngError::InvalidHeader)?;
         }
 
         let mut chunks = vec![];
         let mut i = Png::STANDARD_HEADER.len();
 
         while i < bytes.len() {
-            let length = u32::from_be_bytes(bytes[i..i + 4].try_into().unwrap()) as usize;
+            let length = u32::from_be_bytes(bytes[i..i + 4].try_into()?) as usize;
             let chunk_total_length = 12 + length;
 
             let chunk = Chunk::try_from(&bytes[i..i + chunk_total_length])?;
@@ -107,6 +108,15 @@ impl fmt::Display for Png {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({:?}, {:?})", self.header, self.chunks)
     }
+}
+
+#[derive(Error, Debug)]
+pub enum PngError {
+    #[error("PNG Header is invalid")]
+    InvalidHeader,
+
+    #[error("Chunk not found")]
+    ChunkNotFound,
 }
 
 #[cfg(test)]

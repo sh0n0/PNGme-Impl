@@ -12,7 +12,8 @@ pub fn encode(args: EncodeArgs) -> Result<()> {
 
     png.append_chunk(chunk);
 
-    fs::write(args.path.as_path(), png.as_bytes()).map_err(|_| "could not write image")
+    fs::write(args.path.as_path(), png.as_bytes())?;
+    Ok(())
 }
 
 /// Searches for a message hidden in a PNG file and prints the message if one is found
@@ -33,7 +34,8 @@ pub fn remove(args: RemoveArgs) -> Result<()> {
 
     png.remove_chunk(&chunk_type)?;
 
-    fs::write(args.path.as_path(), png.as_bytes()).map_err(|_| "could not write image")
+    fs::write(args.path.as_path(), png.as_bytes())?;
+    Ok(())
 }
 
 /// Prints all of the chunks in a PNG file

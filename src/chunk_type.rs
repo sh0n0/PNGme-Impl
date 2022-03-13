@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 use std::fmt;
 use std::str::FromStr;
+use thiserror::Error;
 
 use crate::{Error, Result};
 
@@ -68,10 +69,8 @@ impl FromStr for ChunkType {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        let slice: [u8; 4] = match s.as_bytes().try_into() {
-            Ok(slice) => slice,
-            Err(_) => return Err("invalid string"),
-        };
+        let slice: [u8; 4] = s.as_bytes().try_into()?;
+
         let chunk_type = ChunkType::try_from(slice)?;
 
         let is_valid = chunk_type
@@ -82,9 +81,14 @@ impl FromStr for ChunkType {
         if is_valid {
             Ok(chunk_type)
         } else {
-            Err("error")
+            Err(ChunkTypeError::InValidBytes)?
         }
     }
+}
+#[derive(Error, Debug)]
+pub enum ChunkTypeError {
+    #[error("ChunkType includes invalid bytes")]
+    InValidBytes,
 }
 
 #[cfg(test)]

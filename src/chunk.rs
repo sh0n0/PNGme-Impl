@@ -1,6 +1,7 @@
 use crc::Crc;
 use std::convert::TryFrom;
 use std::fmt;
+use thiserror::Error;
 
 use crate::chunk_type::ChunkType;
 use crate::{Error, Result};
@@ -47,11 +48,8 @@ impl Chunk {
     /// Returns the data stored in this chunk as a `String`. This function will return an error
     /// if the stored data is not valid UTF-8.
     pub fn data_as_string(&self) -> Result<String> {
-        let r = String::from_utf8(self.data.clone());
-        match r {
-            Ok(s) => Ok(s),
-            Err(_) => Err("invalid UTF-8"),
-        }
+        let string = String::from_utf8(self.data.clone())?;
+        Ok(string)
     }
 
     /// Returns this chunk as a byte sequences described by the PNG spec.
@@ -85,7 +83,7 @@ impl TryFrom<&[u8]> for Chunk {
         if chunk.crc() == crc {
             Ok(chunk)
         } else {
-            Err("crc error")
+            Err(ChunkError::InvalidCrc)?
         }
     }
 }
@@ -100,6 +98,11 @@ impl fmt::Display for Chunk {
         writeln!(f, "}}",)?;
         Ok(())
     }
+}
+#[derive(Error, Debug)]
+pub enum ChunkError {
+    #[error("crc is invalid")]
+    InvalidCrc,
 }
 
 #[cfg(test)]
