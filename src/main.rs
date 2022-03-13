@@ -13,18 +13,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 fn main() -> Result<()> {
     let args = PngMeArgs::parse();
     match args.commands {
-        args::PngMeCommands::Encode(_) => {
-            println!("encode")
-        }
-        args::PngMeCommands::Decode(_) => {
-            println!("decode")
-        }
-        args::PngMeCommands::Remove(_) => {
-            println!("remove")
-        }
-        args::PngMeCommands::Print(_) => {
-            println!("print")
-        }
+        args::PngMeCommands::Encode(args) => commands::encode(args),
+        args::PngMeCommands::Decode(args) => commands::decode(args),
+        args::PngMeCommands::Remove(args) => commands::remove(args),
+        args::PngMeCommands::Print(args) => commands::print_chunks(args),
     }
-    Ok(())
 }

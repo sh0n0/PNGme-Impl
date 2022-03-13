@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
-use std::fmt;
 use std::path::Path;
 use std::str::FromStr;
+use std::{fmt, fs};
 
 use crate::chunk::Chunk;
 use crate::chunk_type::ChunkType;
@@ -27,7 +27,9 @@ impl Png {
 
     /// Creates a `Png` from a file path
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        todo!()
+        let image = fs::read(path).map_err(|_| "could not read image")?;
+        let png = Png::try_from(image.as_ref())?;
+        Ok(png)
     }
 
     /// Appends a chunk to the end of this `Png` file's `Chunk` list.
